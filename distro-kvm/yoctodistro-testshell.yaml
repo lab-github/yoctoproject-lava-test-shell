@@ -18,6 +18,8 @@ run:
     - touch /etc/profile.d/proxy.sh
     - chmod +x /etc/profile.d/proxy.sh
     - source /lava-*/bin/lava-proxy
+    - uname -a
+    - ip a && echo 0
     - git --version && echo 0
     - pip3 install buildbot-worker && echo 0
 parse:
