@@ -1,0 +1,18 @@
+metadata:
+    format: BSP/Qemu SWQA on core-image-sato-sdk (qemux86-64)
+    name: qemux86-64-bsp
+    description: "BSP/Qemu QA on 2.6M3 rc1 24a833f40d837407baa4e8192f372d998a776b6c on master"
+    maintainer:
+      - aaron.chun.yew.chan@intel.com
+    os:
+      - oe
+    scope:
+      - functional
+    devices:
+      - qemu01
+run:
+    steps:
+      - lava-test-case test-case-193 --shell rpm -ivh mc.rpm
+      - lava-test-case test-case-195 --shell ls -al /var/lib/
+      - lava-test-case test-case-223 --shell connmand && ps -ef | grep connmand
+      - lava-test-case test-case-240 --shell which bash
