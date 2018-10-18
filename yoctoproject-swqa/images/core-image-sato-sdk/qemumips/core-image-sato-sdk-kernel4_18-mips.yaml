@@ -1,0 +1,62 @@
+device_type: qemu01
+job_name: 'Yocto Project Autobuilder 2.6 M3 rc1 (image:core-image-sato-sdk, kernel: 4.18, arch: mips)'
+timeouts:
+  job:
+    minutes: 720
+  action:
+    minutes: 720
+  connection:
+    minutes: 720
+priority: medium
+visibility: public
+context:
+  arch: mips
+  no_kvm: true
+  extra_options:
+    - -device virtio-net-pci,netdev=net0,mac=52:54:00:12:34:02
+    - -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+    - -vga cirrus
+    - -usb
+    - -device usb-tablet
+    - -machine malta
+    - -m 256
+    - -vnc :0
+    - -show-cursor
+    - -device virtio-rng-pci
+    - -serial mon:stdio
+    - -append 'root=/dev/vda rw highres=off  ip=192.168.7.2::192.168.7.1:255.255.255.0 console=ttyS0 console=tty '
+actions:
+- deploy:
+    timeout:
+      minutes: 60
+    to: tmpfs
+    images:
+      kernel:
+        url: https://autobuilder.yocto.io/pub/releases/yocto-2.6_M3.rc1/machines/qemu/qemumips/vmlinux--4.18.9%2Bgit0%2B607726b2d0_a6d4477ea9-r0.2-qemumips-20180922184934.bin
+        image_arg: -kernel {kernel}
+      rootfs:
+        url: https://autobuilder.yocto.io/pub/releases/yocto-2.6_M3.rc1/machines/qemu/qemumips/core-image-sato-sdk-qemumips.ext4
+        image_arg: -drive file={rootfs},if=virtio,format=raw
+    os: oe
+- boot:
+    timeout:
+      minutes: 60
+    method: qemu
+    media: tmpfs
+    failure_retry: 2
+    auto_login: { login_prompt: 'qemumips login:', username: root }
+    prompts:
+      - 'root@qemumips:~#'
+    transfer_overlay:
+      download_command: wget
+      unpack_command: tar -C / -xvpf
+- test:
+    timeout:
+      minutes: 60
+    failure_retry: 3
+    name: yocto-basic-tests
+    definitions:
+    - repository: https://github.com/lab-github/yoctoproject-lava-test-shell.git
+      from: git
+      path: distro-kvm/yoctodistro-testshell.yaml
+      name: yocto-basic-tests

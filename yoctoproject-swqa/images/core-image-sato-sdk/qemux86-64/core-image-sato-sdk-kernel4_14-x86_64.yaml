@@ -1,0 +1,65 @@
+device_type: qemu01
+job_name: 'Yocto Project 2.6M3 rc1 (image:core-image-sato-sdk, kernel: 4.14, arch: x86_64)'
+timeouts:
+  job:
+    minutes: 720
+  action:
+    minutes: 720
+  connection:
+    minutes: 720
+priority: medium
+visibility: public
+context:
+  arch: x86_64
+  no_kvm: true
+  extra_options:
+    - -cpu core2duo
+    - -m 256
+    - -device virtio-net-pci,netdev=net0,mac=52:54:00:12:34:02
+    - -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+    - -usb
+    - -vga vmware
+    - -vnc :0
+    - -show-cursor
+    - -device usb-tablet
+    - -device virtio-rng-pci
+    - -serial mon:stdio
+    - -append 'root=/dev/vda rw highres=off mem=256M ip=192.168.7.2::192.168.7.1:255.255.255.0 vga=0 uvesafb.mode_option=640x480-32 oprofile.timer=1 uvesafb.task_timeout=-1'
+actions:
+- deploy:
+    timeout:
+      minutes: 60
+    to: tmpfs
+    images:
+      kernel:
+        #url: file:///data/qemux86-64/kernel/bzImage--4.14.71%2Bgit0%2B46a547fa51_78a16a4d8c-r0.2-qemux86-64-20180922192923.bin
+        #url: https://autobuilder.yocto.io/pub/releases/yocto-2.6_M3.rc1/machines/qemu/qemux86-64/bzImage--4.14.71%2Bgit0%2B46a547fa51_78a16a4d8c-r0.2-qemux86-64-20180922192923.bin
+        url: https://autobuilder.yocto.io/pub/releases/yocto-2.6_M3.rc1/machines/qemu/qemux86-64/bzImage--4.18.9%2Bgit0%2B607726b2d0_0cdc8564c6-r0.2-qemux86-64-20180922184041.bin
+        image_arg: -kernel {kernel}
+      rootfs:
+        #url: file:///data/qemux86-64/rootfs/core-image-sato-sdk-qemux86-64.ext4
+        url: https://autobuilder.yocto.io/pub/releases/yocto-2.6_M3.rc1/machines/qemu/qemux86-64/core-image-sato-sdk-qemux86-64-20180924114556.rootfs.ext4
+        image_arg: -drive file={rootfs},if=virtio,format=raw
+    os: oe
+- boot:
+    timeout:
+      minutes: 60
+    method: qemua
+    media: tmpfs
+    failure_retry: 2
+    auto_login: { login_prompt: 'qemux86-64 login:', username: root }
+    prompts:
+      - 'root@qemux86-64:~#'
+    transfer_overlay:
+      download_command: wget
+      unpack_command: tar -C / -xvpf
+- test:
+    timeout:
+      minutes: 60
+    failure_retry: 3
+    name: yocto-basic-tests
+    definitions:
+    - repository: https://github.com/lab-github/yoctoproject-lava-test-shell.git
+      from: git
+      path: distro-kvm/yoctodistro-testshell.yaml
+      name: yocto-basic-tests
